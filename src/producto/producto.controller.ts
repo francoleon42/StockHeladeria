@@ -9,7 +9,7 @@ import { TipoHistorial } from 'src/historial/tipo.enum';
 export class ProductoController {
     productoService: ProductoService;
     historialServicio: HistorialService;
-    constructor(productoService: ProductoService , historialServicio: HistorialService ) {
+    constructor(productoService: ProductoService, historialServicio: HistorialService) {
         this.productoService = productoService;
         this.historialServicio = historialServicio;
     }
@@ -19,21 +19,26 @@ export class ProductoController {
         return await this.productoService.crear(producto);
     }
     @Get("/obtener/:id")
-    async getProducto(@Param('id') id: number){
+    async getProducto(@Param('id') id: number) {
         return this.productoService.obtenerProducto(id);
     }
 
     @Get("/obtenerAll")
-    async getAll(): Promise<Producto[]>{
+    async getAll(): Promise<Producto[]> {
         return await this.productoService.obtenerProductos();
     }
 
+    @Get("/bajoUmbral")
+    async getProductoBajoUmbral(): Promise<Producto[]> {
+        return await this.productoService.obtenerProductosBajoStock();
+    }
+   
     @Patch("/ingresoDeStock/:id")
     async ingresoDeStock(@Param('id') id: number, @Body('stockIngresado') stockIngresado: number): Promise<Producto> {
 
         try {
 
-            this.guardarHistorial(stockIngresado,TipoHistorial.INGRESO,id);
+            this.guardarHistorial(stockIngresado, TipoHistorial.INGRESO, id);
             return await this.productoService.ingresoDeStock(id, stockIngresado);
         }
         catch (error) {
@@ -46,21 +51,21 @@ export class ProductoController {
 
         try {
 
-            this.guardarHistorial(stockRetirado,TipoHistorial.EGRESO,id);
+            this.guardarHistorial(stockRetirado, TipoHistorial.EGRESO, id);
             return await this.productoService.egresoDeStock(id, stockRetirado);
         }
         catch (error) {
             throw new NotFoundException(`No se pudo dar de baja producto: ${error.message}`);
         }
     }
-    
 
-    async guardarHistorial(stock: number, tipo :TipoHistorial, productoID : number ): Promise<void> {
+
+    async guardarHistorial(stock: number, tipo: TipoHistorial, productoID: number): Promise<void> {
         const fecha = new Date();
         const nombreProducto = this.productoService.obtenerNombreDeProducto(productoID);
-        await this.historialServicio.crear(stock,tipo, fecha, productoID );
+        await this.historialServicio.crear(stock, tipo, fecha, productoID);
     }
-   
+
 
 
 

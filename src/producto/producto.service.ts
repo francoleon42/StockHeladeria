@@ -2,14 +2,16 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Producto } from './producto.model';
 import { HistorialService } from 'src/historial/historial.service';
-import { NotificacionesGateway } from  "../notificaciones/notificaciones"
+import { Op, Sequelize } from 'sequelize';
+
+
 
 @Injectable()
 export class ProductoService {
 
     constructor(
         @InjectModel(Producto) private readonly productoRepo: typeof Producto,
-        private notificaciones : NotificacionesGateway
+
     ) { }
 
     async crear(producto: Producto): Promise<Producto> {
@@ -34,18 +36,18 @@ export class ProductoService {
         if (!producto) {
             throw new NotFoundException(`Producto con ID ${id} no encontrado`);
         }
-       
-        if (this.validarStock(stockEgreso,producto.umbral,producto.stock)){   
-            this.notificaciones.enviarAlertaUmbral();
-        }else{
+
+        if (this.validarStock(stockEgreso, producto.stock)) {
             this.DesminuirStock(stockEgreso, producto);
             await producto.save();
         }
 
+
         return producto;
     }
-    validarStock(stockEgreso: number,umbral : number,stockActual : number){
-        return  stockActual - stockEgreso <= umbral;
+
+    validarStock(stockEgreso: number, stockActual: number) {
+        return stockActual - stockEgreso < 0;
     }
 
     aumentarStock(stockIngresado: number, productoActual: Producto) {
@@ -64,4 +66,14 @@ export class ProductoService {
     async obtenerNombreDeProducto(id: number): Promise<string> {
         return (await this.productoRepo.findByPk(id))?.nombre;
     }
+    async obtenerProductosBajoStock(): Promise<Producto[]> {
+        return this.productoRepo.findAll({
+            where: {
+                stock: {
+                    [Op.lt]: Sequelize.col('umbral') // Filtra productos con stock menor que el umbral del producto
+                } // Filtra productos con stock menor a 10
+            }
+        });
+    }
+
 }
