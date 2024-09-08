@@ -47,7 +47,7 @@ export class ProductoService {
     }
 
     validarStock(stockEgreso: number, stockActual: number) {
-        return stockActual - stockEgreso < 0;
+        return stockActual - stockEgreso > 0;
     }
 
     aumentarStock(stockIngresado: number, productoActual: Producto) {
